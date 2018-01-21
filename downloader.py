@@ -62,28 +62,28 @@ def download_latest_photo(session, folder, name, url):
     files = sorted([i for i in os.listdir(place_dir)
                 if os.path.isfile(os.path.join(place_dir, i))])
 
-    #try:
-    r = session.get(url, stream=True)
-    if r.status_code == 200:
-        ext = mimetypes.guess_extension(r.headers.get('content-type'))
-        filename = os.path.join(place_dir,
-                datetime.utcnow().strftime('%Y%m%d%H%M%S'))
-        if ext is not None:
-            if ext in ['.jpe', '.jpeg']:
-                ext = '.jpg'
-            filename = filename + ext
-        with open(filename, 'wb') as f:
-            r.raw.decode_content = True
-            shutil.copyfileobj(r.raw, f)
+    try:
+        r = session.get(url, stream=True)
+        if r.status_code == 200:
+            ext = mimetypes.guess_extension(r.headers.get('content-type'))
+            filename = os.path.join(place_dir,
+                    datetime.utcnow().strftime('%Y%m%d%H%M%S'))
+            if ext is not None:
+                if ext in ['.jpe', '.jpeg']:
+                    ext = '.jpg'
+                filename = filename + ext
+            with open(filename, 'wb') as f:
+                r.raw.decode_content = True
+                shutil.copyfileobj(r.raw, f)
 
-        if ((len(files) > 0) and
-                (md5(os.path.join(place_dir, files[-1])) == md5(filename))):
-            os.remove(filename)
-        else:
-            print("Downloaded %s." % (name))
+            if ((len(files) > 0) and
+                    (md5(os.path.join(place_dir, files[-1])) == md5(filename))):
+                os.remove(filename)
+            else:
+                print("Downloaded %s." % (name))
 
-    #except:
-    #    pass
+    except:
+        pass
 
 
 def main():
