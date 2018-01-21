@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from bs4 import BeautifulSoup
 from datetime import datetime
+import threading
 import mimetypes
 import requests
 import hashlib
@@ -80,8 +81,7 @@ def download_latest_photo(session, folder, name, url):
                     (md5(os.path.join(place_dir, files[-1])) == md5(filename))):
                 os.remove(filename)
             else:
-                print("Downloaded %s." % (name))
-
+                print("Downloaded %s" % (name))
     except:
         pass
 
@@ -89,9 +89,14 @@ def download_latest_photo(session, folder, name, url):
 def main():
     with requests.Session() as s:
         photos = get_photos(s, INDEX_URL)
+        d_threads = []
         for name in sorted(photos.keys()):
             if photos[name] is not None:
-                download_latest_photo(s, DOWNLOAD_FOLDER, name, photos[name])
+                d_threads.append(threading.Thread(target=download_latest_photo,
+                    args=(s, DOWNLOAD_FOLDER, name, photos[name])))
+                d_threads[-1].start()
+        for d_thread in d_threads:
+            d_thread.join()
 
 if __name__ == '__main__':
     main()
