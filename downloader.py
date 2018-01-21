@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from bs4 import BeautifulSoup
 from datetime import datetime
-import threading
+import concurrent.futures
 import mimetypes
 import requests
 import hashlib
@@ -50,6 +50,7 @@ def get_photos(session, url):
     return photos
 
 def download_latest_photo(session, folder, name, url):
+    output = ""
     # Mimetypes initialization
     if not mimetypes.inited:
         mimetypes.init()
@@ -63,40 +64,45 @@ def download_latest_photo(session, folder, name, url):
     files = sorted([i for i in os.listdir(place_dir)
                 if os.path.isfile(os.path.join(place_dir, i))])
 
-    try:
-        r = session.get(url, stream=True)
-        if r.status_code == 200:
-            ext = mimetypes.guess_extension(r.headers.get('content-type'))
-            filename = os.path.join(place_dir,
-                    datetime.utcnow().strftime('%Y%m%d%H%M%S'))
-            if ext is not None:
-                if ext in ['.jpe', '.jpeg']:
-                    ext = '.jpg'
-                filename = filename + ext
-            with open(filename, 'wb') as f:
-                r.raw.decode_content = True
-                shutil.copyfileobj(r.raw, f)
+    r = session.get(url, stream=True)
+    if r.status_code == 200:
+        ext = mimetypes.guess_extension(r.headers.get('content-type'))
+        filename = os.path.join(place_dir,
+                datetime.utcnow().strftime('%Y%m%d%H%M%S'))
+        if ext is not None:
+            if ext in ['.jpe', '.jpeg']:
+                ext = '.jpg'
+            filename = filename + ext
+        with open(filename, 'wb') as f:
+            r.raw.decode_content = True
+            shutil.copyfileobj(r.raw, f)
 
-            if ((len(files) > 0) and
-                    (md5(os.path.join(place_dir, files[-1])) == md5(filename))):
-                os.remove(filename)
-            else:
-                print("Downloaded %s" % (name))
-    except:
-        pass
+        if ((len(files) > 0) and
+                (md5(os.path.join(place_dir, files[-1])) == md5(filename))):
+            os.remove(filename)
+            output = "Not Downloaded. Latest Image: %s" % (files[-1])
+        else:
+            output = "Downloaded as: %s" % (os.path.basename(filename))
+
+    return output
 
 
 def main():
     with requests.Session() as s:
         photos = get_photos(s, INDEX_URL)
-        d_threads = []
-        for name in sorted(photos.keys()):
-            if photos[name] is not None:
-                d_threads.append(threading.Thread(target=download_latest_photo,
-                    args=(s, DOWNLOAD_FOLDER, name, photos[name])))
-                d_threads[-1].start()
-        for d_thread in d_threads:
-            d_thread.join()
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            threads = {executor.submit(download_latest_photo, s,
+                DOWNLOAD_FOLDER, i, photos[i]): i for i in photos
+                if photos[i] is not None}
+            for future in concurrent.futures.as_completed(threads):
+                name = threads[future]
+                try:
+                    output = future.result()
+                except Exception as exc:
+                    print("%s generated an exception: %s" % (name, exc))
+                else:
+                    print("%s: %s" % (name, output))
 
 if __name__ == '__main__':
     main()
