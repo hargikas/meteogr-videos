@@ -85,12 +85,14 @@ def download_latest_photo(session, folder, name, url):
 
 
 def main():
-	# Initialize the mimetypes in order not to create more IO in the worker threads
-	mimetypes.init()
+    # Initialize the mimetypes in order not to create more IO 
+    # in the worker threads
+    mimetypes.init()
 
     with requests.Session() as s:
+        print("Querying Index Page: %r" % (INDEX_URL))
         photos = get_photos(s, INDEX_URL)
-
+        print("Got %d indexes" % (len(photos)))
         with concurrent.futures.ThreadPoolExecutor() as executor:
             threads = {executor.submit(download_latest_photo, s,
                 DOWNLOAD_FOLDER, i, photos[i]): i for i in photos
@@ -100,7 +102,7 @@ def main():
                 try:
                     output = future.result()
                 except Exception as exc:
-                    print("%s generated an exception: %s" % (name, exc))
+                    print("%s: EXCEPTION: %s" % (name, exc))
                 else:
                     print("%s: %s" % (name, output))
 
