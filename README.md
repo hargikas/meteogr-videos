@@ -1,6 +1,6 @@
 # Meteo.gr Timelapse Images and Videos
 
-A python scripts to create timelapse images and videos by downloading images from web-cameras
+Python scripts to create timelapse images and videos by downloading images from web-cameras
 
 ## Getting Started
 
@@ -16,12 +16,13 @@ Give examples
 
 ### Installing
 
-A step by step series of examples that tell you have to get a development env running
+The download.py script uses the BeautifulSoup for parsing and Requests for HTTP downloading.
 
-Say what the step will be
+In most systems these prerequisites can be installed using pip3
 
 ```
-Give the example
+pip3 install beautifulsoup4
+pip3 install requests
 ```
 
 And repeat
@@ -58,9 +59,8 @@ Add additional notes about how to deploy this on a live system
 
 ## Built With
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
+* [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) - The HTML parser used
+* [Requests](http://docs.python-requests.org/en/master/) - The HTTP library used
 
 ## Contributing
 
