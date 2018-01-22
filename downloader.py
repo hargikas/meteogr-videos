@@ -7,10 +7,10 @@ import requests
 import hashlib
 import os.path
 import shutil
+import fire
 import os
 
 INDEX_URL = 'http://meteo.gr/webcameras.cfm'
-DOWNLOAD_FOLDER = '/media/pi/TIMELAPSE/'
 
 def md5(fname):
     hash_md5 = hashlib.md5()
@@ -84,18 +84,35 @@ def download_latest_photo(session, folder, name, url):
     return output
 
 
-def main():
+def start(folder, url=INDEX_URL, only=None, exclude=[]):
     # Initialize the mimetypes in order not to create more IO 
     # in the worker threads
     mimetypes.init()
 
     with requests.Session() as s:
-        print("Querying Index Page: %r" % (INDEX_URL))
+        print("Querying Index Page: %r" % (url))
         photos = get_photos(s, INDEX_URL)
         print("Got %d indexes" % (len(photos)))
+
+        # If only parameter is specified, then download only this place
+        if only is not None:
+            tmp = {}
+            if only in photos:
+                tmp[only] = photos[only]
+            photos = tmp
+
+        # Delete all the files for the excluded files
+        if len(exclude) > 0:
+            tmp = {}
+            for item in exclude:
+                for key in photos:
+                    if key != item:
+                        tmp[key] = photos[key]
+            photos = tmp
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             threads = {executor.submit(download_latest_photo, s,
-                DOWNLOAD_FOLDER, i, photos[i]): i for i in photos
+                folder, i, photos[i]): i for i in photos
                 if photos[i] is not None}
             for future in concurrent.futures.as_completed(threads):
                 name = threads[future]
@@ -105,6 +122,10 @@ def main():
                     print("%s: EXCEPTION: %s" % (name, exc))
                 else:
                     print("%s: %s" % (name, output))
+
+
+def main():
+    fire.Fire(start)
 
 if __name__ == '__main__':
     main()
