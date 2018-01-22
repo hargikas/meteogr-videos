@@ -51,10 +51,7 @@ def get_photos(session, url):
 
 def download_latest_photo(session, folder, name, url):
     output = ""
-    # Mimetypes initialization
-    if not mimetypes.inited:
-        mimetypes.init()
-
+    
     # Create the place directory
     place_dir = os.path.join(folder, name)
     if not os.path.exists(place_dir):
@@ -88,6 +85,9 @@ def download_latest_photo(session, folder, name, url):
 
 
 def main():
+	# Initialize the mimetypes in order not to create more IO in the worker threads
+	mimetypes.init()
+
     with requests.Session() as s:
         photos = get_photos(s, INDEX_URL)
 
