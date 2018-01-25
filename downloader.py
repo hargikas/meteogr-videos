@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 from bs4 import BeautifulSoup
 from datetime import datetime
+from tendo import singleton
 import concurrent.futures
+from PIL import Image
 import mimetypes
 import requests
 import hashlib
 import os.path
 import shutil
+import errno
 import fire
 import os
 
 INDEX_URL = 'http://meteo.gr/webcameras.cfm'
+TIMEOUT = 30
 
 def md5(fname):
     hash_md5 = hashlib.md5()
@@ -19,9 +23,27 @@ def md5(fname):
             hash_md5.update(chuck)
         return hash_md5.hexdigest()
 
+def silentremove(fname):
+    if fname is not None:
+        try:
+            os.remove(fname)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
+
+def verify_photo(fname):
+    try:
+        image = Image.open(fname)
+        image.verify()
+        image = Image.open(fname)
+        image.load()
+    except:
+        return False
+    return True
+
 def get_photos(session, url):
     photos = {}
-    r = session.get(url)
+    r = session.get(url, timeout=TIMEOUT)
     soup = BeautifulSoup(r.text[:], 'html.parser')
     for table in soup.find_all('table'):
         class_attrs = table.get('class')
@@ -50,6 +72,7 @@ def get_photos(session, url):
     return photos
 
 def download_latest_photo(session, folder, name, url):
+    download_errors = False
     output = ""
     
     # Create the place directory
@@ -61,25 +84,40 @@ def download_latest_photo(session, folder, name, url):
     files = sorted([i for i in os.listdir(place_dir)
                 if os.path.isfile(os.path.join(place_dir, i))])
 
-    r = session.get(url, stream=True)
-    if r.status_code == 200:
-        ext = mimetypes.guess_extension(r.headers.get('content-type'))
-        filename = os.path.join(place_dir,
-                datetime.utcnow().strftime('%Y%m%d%H%M%S'))
-        if ext is not None:
-            if ext in ['.jpe', '.jpeg']:
-                ext = '.jpg'
-            filename = filename + ext
-        with open(filename, 'wb') as f:
-            r.raw.decode_content = True
-            shutil.copyfileobj(r.raw, f)
+    filename = None
+    try:
+        r = session.get(url, stream=True, timeout=TIMEOUT)
+        if r.status_code == 200:
+            ext = mimetypes.guess_extension(r.headers.get('content-type'))
+            filename = os.path.join(place_dir,
+                    datetime.utcnow().strftime('%Y%m%d%H%M%S'))
+            if ext is not None:
+                if ext in ['.jpe', '.jpeg']:
+                    ext = '.jpg'
+                filename = filename + ext
+            with open(filename, 'wb') as f:
+                r.raw.decode_content = True
+                shutil.copyfileobj(r.raw, f)
+        else:
+            download_errors = True
+            output = "Error Status Code: %d" % (r.status_code)
+    except requests.exceptions.RequestException as e:
+        download_errors = True
+        output = "Error downloading. %s" % (e)
 
+    if (not download_errors) and (not verify_photo(filename)):
+        download_errors = True
+        output = "Error downloading. Not a valid image."
+
+    if not download_errors:
         if ((len(files) > 0) and
                 (md5(os.path.join(place_dir, files[-1])) == md5(filename))):
-            os.remove(filename)
+            silentremove(filename)
             output = "Not Downloaded. Latest Image: %s" % (files[-1])
         else:
             output = "Downloaded as: %s" % (os.path.basename(filename))
+    else:
+        silentremove(filename)
 
     return output
 
@@ -128,4 +166,5 @@ def main():
     fire.Fire(start)
 
 if __name__ == '__main__':
+    me = singleton.SingleInstance()
     main()
