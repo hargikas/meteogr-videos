@@ -33,10 +33,10 @@ def silentremove(fname):
 
 def verify_photo(fname):
     try:
-        image = Image.open(fname)
-        image.verify()
-        image = Image.open(fname)
-        image.load()
+        with Image.open(fname) as image:
+            image.verify()
+        with Image.open(fname) as image:
+            image.load()
     except:
         return False
     return True
