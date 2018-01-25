@@ -1,22 +1,24 @@
 #!/usr/bin/env python3
-from bs4 import BeautifulSoup
 from datetime import datetime
-from tendo import singleton
 import concurrent.futures
-from PIL import Image
 import mimetypes
-import requests
 import hashlib
-import os.path
 import shutil
 import errno
-import fire
+import os.path
 import os
+
+import requests
+from PIL import Image
+from bs4 import BeautifulSoup
+from tendo import singleton
+import fire
 
 INDEX_URL = 'http://meteo.gr/webcameras.cfm'
 TIMEOUT = 30
 
 def md5(fname):
+    """Calculate the md5 sum of a file"""
     hash_md5 = hashlib.md5()
     with open(fname, "rb") as f:
         for chuck in iter(lambda: f.read(4096), b""):
@@ -24,6 +26,7 @@ def md5(fname):
         return hash_md5.hexdigest()
 
 def silentremove(fname):
+    """Remove a file and supress any errors if the file doesn't exist"""
     if fname is not None:
         try:
             os.remove(fname)
@@ -32,6 +35,7 @@ def silentremove(fname):
                 raise
 
 def verify_photo(fname):
+    """Guess if the file is a corrupted image or not"""
     try:
         with Image.open(fname) as image:
             image.verify()
@@ -123,8 +127,8 @@ def download_latest_photo(session, folder, name, url):
 
 
 def start(folder, url=INDEX_URL, only=None, exclude=[]):
-    # Initialize the mimetypes in order not to create more IO 
-    # in the worker threads
+    # Initialize the mimetypes in order not to create more IO in the worker
+    # threads
     mimetypes.init()
 
     with requests.Session() as s:
@@ -164,6 +168,7 @@ def start(folder, url=INDEX_URL, only=None, exclude=[]):
 
 def main():
     fire.Fire(start)
+
 
 if __name__ == '__main__':
     me = singleton.SingleInstance()
