@@ -1,70 +1,68 @@
 # Meteo.gr Timelapse Images and Videos
 
-Python scripts to create timelapse images and videos by downloading images from web-cameras
+Python scripts to create timelapse images and videos by downloading images from web-cameras from [meteo.gr](http://meteo.gr/webcameras.cfm).
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
+The scripts require python 3, and the following third party libraries:
 
-```
-Give examples
-```
+* Beautiful Soup
+* Requests
+* Fire
+* Tendo
+* Pillow
 
 ### Installing
 
-The download.py script uses the BeautifulSoup for parsing and Requests for HTTP downloading.
+You can automatically install all the required package by using [pipenv](http://pipenv.readthedocs.io/en/latest/):
 
-In most systems these prerequisites can be installed using pip3
-
+```bash
+pipenv install
 ```
+
+Or you can install manually the required libraries:
+
+```bash
 pip3 install beautifulsoup4
 pip3 install requests
+pip3 install fire
+pip3 install tendo
+pip3 install pillow
 ```
 
-And repeat
+### Executing
 
-```
-until finished
-```
+The main script is [downloader.py](downloader.py) and you can easily execute either with pipenv or just with python.
 
-End with an example of getting some data out of the system or using it for a little demo
+Pipenv:
 
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
+```bash
+pipenv run python downloader.py --folder /folder/of/images/to/save
 ```
 
-### And coding style tests
+Just Python:
 
-Explain what these tests test and why
-
-```
-Give an example
+```bash
+python downloader.py --folder /folder/of/images/to/save
 ```
 
-## Deployment
-
-Add additional notes about how to deploy this on a live system
+There is also a sample script file [download.sh](download.sh) which correctly changes to the script working directory in order to create the correct virtual enviroment.
 
 ## Built With
 
 * [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) - The HTML parser used
 * [Requests](http://docs.python-requests.org/en/master/) - The HTTP library used
+* [Fire](https://github.com/google/python-fire) - For command line argument parsing
+* [Tendo](https://github.com/pycontribs/tendo) - Single Instance to prevent your script from running in parallel.
+* [Pillow](https://pillow.readthedocs.io/en/latest/) - Imaging Library for checking the validity of an image.
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
+Please read [CONTRIBUTING.md](https://gist.github.com/hargikas/7d68fd0dbb2932d0a3a851e253b48fc5) for details on our code of conduct, and the process for submitting pull requests to us.
 
 ## Authors
 
@@ -77,5 +75,4 @@ This project is licensed under the GPL-3.0 License - see the [LICENSE](LICENSE) 
 ## Acknowledgments
 
 * Hat tip to anyone who's code was used
-* Inspiration
-* etc
+* The meteo.gr free use of web-cameras, and anyone who publices their meteo footage.
