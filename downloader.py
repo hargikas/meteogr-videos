@@ -46,6 +46,7 @@ def verify_photo(fname):
     return True
 
 def get_photos(session, url):
+    """Query the index page (url) for the meteo images"""
     photos = {}
     r = session.get(url, timeout=TIMEOUT)
     soup = BeautifulSoup(r.text[:], 'html.parser')
@@ -76,6 +77,7 @@ def get_photos(session, url):
     return photos
 
 def download_latest_photo(session, folder, name, url):
+    """Downloads the latest photo in the folder"""
     download_errors = False
     output = ""
     
@@ -127,6 +129,8 @@ def download_latest_photo(session, folder, name, url):
 
 
 def start(folder, url=INDEX_URL, only=None, exclude=[]):
+    """The main process, of quering the index page and create
+    a thread for each photo."""
     # Initialize the mimetypes in order not to create more IO in the worker
     # threads
     mimetypes.init()
@@ -167,9 +171,9 @@ def start(folder, url=INDEX_URL, only=None, exclude=[]):
 
 
 def main():
+    me = singleton.SingleInstance()
     fire.Fire(start)
 
 
 if __name__ == '__main__':
-    me = singleton.SingleInstance()
     main()
