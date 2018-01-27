@@ -33,6 +33,7 @@ pip3 install requests
 pip3 install fire
 pip3 install tendo
 pip3 install pillow
+pip3 install romanize
 ```
 
 ### Executing
@@ -64,7 +65,7 @@ There is also a sample script file [download.sh](download.sh) which correctly ch
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](https://gist.github.com/hargikas/7d68fd0dbb2932d0a3a851e253b48fc5) for details on our code of conduct, and the process for submitting pull requests to us.
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
 ## Authors
 
