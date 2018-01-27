@@ -9,6 +9,7 @@ import os.path
 import os
 
 import requests
+from romanize import romanize
 from PIL import Image
 from bs4 import BeautifulSoup
 from tendo import singleton
@@ -82,13 +83,13 @@ def download_latest_photo(session, folder, name, url):
     output = ""
     
     # Create the place directory
-    place_dir = os.path.join(folder, name)
+    place_dir = os.path.join(folder, romanize(name))
     if not os.path.exists(place_dir):
         os.makedirs(place_dir)
 
     # Find the latest image
     files = sorted([i for i in os.listdir(place_dir)
-                if os.path.isfile(os.path.join(place_dir, i))])
+                    if os.path.isfile(os.path.join(place_dir, i))])
 
     filename = None
     try:
@@ -107,9 +108,9 @@ def download_latest_photo(session, folder, name, url):
         else:
             download_errors = True
             output = "Error Status Code: %d" % (r.status_code)
-    except requests.exceptions.RequestException as e:
+    except requests.exceptions.RequestException as exc:
         download_errors = True
-        output = "Error downloading. %s" % (e)
+        output = "Error downloading. %s" % (exc)
 
     if (not download_errors) and (not verify_photo(filename)):
         download_errors = True

@@ -12,9 +12,10 @@ The scripts require python 3, and the following third party libraries:
 
 * Beautiful Soup
 * Requests
-* Fire
-* Tendo
+* Romanize
 * Pillow
+* Tendo
+* Fire
 
 ### Installing
 
@@ -56,9 +57,10 @@ There is also a sample script file [download.sh](download.sh) which correctly ch
 
 * [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) - The HTML parser used
 * [Requests](http://docs.python-requests.org/en/master/) - The HTTP library used
-* [Fire](https://github.com/google/python-fire) - For command line argument parsing
-* [Tendo](https://github.com/pycontribs/tendo) - Single Instance to prevent your script from running in parallel.
+* [Romanize](https://github.com/gschizas/RomanizePython) - Transcribe Greek text to Latin alphabet using the ISO 843:1997 standard.
 * [Pillow](https://pillow.readthedocs.io/en/latest/) - Imaging Library for checking the validity of an image.
+* [Tendo](https://github.com/pycontribs/tendo) - Single Instance to prevent your script from running in parallel.
+* [Fire](https://github.com/google/python-fire) - For command line argument parsing
 
 ## Contributing
 
