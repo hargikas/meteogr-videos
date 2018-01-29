@@ -26,8 +26,8 @@ TIMEOUT = 31
 def md5(fname):
     """Calculate the md5 sum of a file"""
     hash_md5 = hashlib.md5()
-    with open(fname, "rb") as f:
-        for chuck in iter(lambda: f.read(4096), b""):
+    with open(fname, "rb") as f_p:
+        for chuck in iter(lambda: f_p.read(4096), b""):
             hash_md5.update(chuck)
         return hash_md5.hexdigest()
 
@@ -113,9 +113,9 @@ def download_latest_photo(session, folder, name, url):
                 if ext in ['.jpe', '.jpeg']:
                     ext = '.jpg'
                 filename = filename + ext
-            with open(filename, 'wb') as f:
+            with open(filename, 'wb') as f_p:
                 req.raw.decode_content = True
-                shutil.copyfileobj(req.raw, f)
+                shutil.copyfileobj(req.raw, f_p)
         else:
             download_errors = True
             output = "Error Status Code: %d" % (req.status_code)
@@ -145,7 +145,7 @@ def sane_arguments(fire_input):
     type_of = type(fire_input).__name__
     result = []
 
-    # Try to convert possible 
+    # Try to convert possible
     if ((type_of == 'str') or (type_of == 'int') or (type_of == 'float')):
         result = [fire_input]
     elif type_of == 'list':
@@ -177,7 +177,7 @@ def start(folder, url=INDEX_URL, include=None, exclude=None):
             for item in sane_arguments(include):
                 item_name = item
                 if (type(item).__name__ == 'int'
-                    and item < len(photos_index)):
+                        and item < len(photos_index)):
                     item_name = photos_index[item]
                 if item_name in photos:
                     tmp[item_name] = photos[item_name]
@@ -189,7 +189,7 @@ def start(folder, url=INDEX_URL, include=None, exclude=None):
             for item in sane_arguments(exclude):
                 item_name = item
                 if (type(item).__name__ == 'int'
-                    and item < len(photos_index)):
+                        and item < len(photos_index)):
                     item_name = photos_index[item]
                 for key in photos:
                     if key != item_name:
