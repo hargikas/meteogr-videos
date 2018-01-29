@@ -19,9 +19,8 @@ import fire
 # The main index page of web-cameras of meteo.gr
 INDEX_URL = 'http://meteo.gr/webcameras.cfm'
 
-#  It's a good practice to set connect timeouts
-# to slightly larger than a multiple of 3, which is the default TCP packet
-# retransmission window.
+# It's a good practice to set connect timeouts to slightly larger than a
+# multiple of 3, which is the default TCP packet retransmission window.
 TIMEOUT = 31
 
 def md5(fname):
@@ -55,6 +54,7 @@ def verify_photo(fname):
 def get_photos(session, url):
     """Query the index page (url) for the meteo images"""
     photos = {}
+    photos_index = []
     req = session.get(url, timeout=TIMEOUT)
     soup = BeautifulSoup(req.text[:], 'html.parser')
     for table in soup.find_all('table'):
@@ -70,7 +70,9 @@ def get_photos(session, url):
                     images = []
                 for col in row.find_all('td'):
                     if headers:
-                        places.append(str(col.string).strip())
+                        place_name = str(col.string).strip()
+                        places.append(place_name)
+                        photos_index.append(place_name)
                     else:
                         img = col.find('img')
                         images.append(img.get('src'))
@@ -83,7 +85,7 @@ def get_photos(session, url):
                         i = i + 1
 
                 headers = not headers
-    return photos
+    return (photos, photos_index)
 
 def download_latest_photo(session, folder, name, url):
     """Downloads the latest photo in the folder"""
@@ -138,8 +140,26 @@ def download_latest_photo(session, folder, name, url):
 
     return output
 
+def sane_arguments(fire_input):
+    """Transform the argument into a list of strings or a list of integers"""
+    type_of = type(fire_input).__name__
+    result = []
 
-def start(folder, url=INDEX_URL, only=None, exclude=None):
+    # Try to convert possible 
+    if ((type_of == 'str') or (type_of == 'int') or (type_of == 'float')):
+        result = [fire_input]
+    elif type_of == 'list':
+        result = fire_input[:]
+    elif type_of == 'tuple':
+        result = list(fire_input)
+    elif type_of == 'dict':
+        result = [key for key in fire_input]
+
+    result = [int(i) if type(i).__name__ == 'float' else i for i in result]
+    return result
+
+
+def start(folder, url=INDEX_URL, include=None, exclude=None):
     """The main process, of quering the index page and create
     a thread for each photo."""
     # Initialize the mimetypes in order not to create more IO in the worker
@@ -148,22 +168,31 @@ def start(folder, url=INDEX_URL, only=None, exclude=None):
 
     with requests.Session() as session:
         print("Querying Index Page: %r" % (url))
-        photos = get_photos(session, INDEX_URL)
-        print("Got %d indexes" % (len(photos)))
+        photos, photos_index = get_photos(session, INDEX_URL)
+        print("Got %d indexes" % (len(photos_index)))
 
-        # If only parameter is specified, then download only this place
-        if only is not None:
+        # If include parameter is specified, then download only these places
+        if include is not None:
             tmp = {}
-            if only in photos:
-                tmp[only] = photos[only]
+            for item in sane_arguments(include):
+                item_name = item
+                if (type(item).__name__ == 'int'
+                    and item < len(photos_index)):
+                    item_name = photos_index[item]
+                if item_name in photos:
+                    tmp[item_name] = photos[item_name]
             photos = tmp
 
         # Delete all the files for the excluded files
         if exclude is not None:
             tmp = {}
-            for item in exclude:
+            for item in sane_arguments(exclude):
+                item_name = item
+                if (type(item).__name__ == 'int'
+                    and item < len(photos_index)):
+                    item_name = photos_index[item]
                 for key in photos:
-                    if key != item:
+                    if key != item_name:
                         tmp[key] = photos[key]
             photos = tmp
 
