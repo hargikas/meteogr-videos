@@ -13,8 +13,8 @@ fire = "*"
 tendo = "*"
 pillow = "*"
 romanize = "*"
-imageio = "*"
 
 
 [dev-packages]
 
+imageio = "*"
