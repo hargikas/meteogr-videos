@@ -22,7 +22,7 @@ The scripts require python 3, and the following third party libraries:
 You can automatically install all the required package by using [pipenv](http://pipenv.readthedocs.io/en/latest/):
 
 ```bash
-pipenv install
+pipenv install  --skip-lock
 ```
 
 Or you can install manually the required libraries:

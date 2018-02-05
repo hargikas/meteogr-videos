@@ -211,7 +211,7 @@ def start(folder, url=INDEX_URL, include=None, exclude=None):
 
 
 def main():
-    """The main function of the script. It prohibites to run in parallel
+    """The main function of the script. It prohibits to run in parallel
        and also make the argument parsing"""
     _ = singleton.SingleInstance()
     fire.Fire(start)
