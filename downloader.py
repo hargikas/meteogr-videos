@@ -71,16 +71,21 @@ def get_photos(session, url):
                 for col in row.find_all('td'):
                     if headers:
                         place_name = str(col.string).strip()
+                        if place_name is not None: 
+                            place_name = '{:03d}'.format(
+                                len(photos_index)) + '.' + place_name
                         places.append(place_name)
                         photos_index.append(place_name)
                     else:
                         img = col.find('img')
-                        images.append(img.get('src'))
-
+                        if img is not None:
+                            images.append(img.get('src'))
+                        else:
+                            images.append(None)
                 if not headers:
                     i = 0
                     for place in places:
-                        if images[i] is not None:
+                        if (place is not None) and (images[i] is not None):
                             photos[place] = images[i]
                         i = i + 1
 
@@ -169,7 +174,7 @@ def start(folder, url=INDEX_URL, include=None, exclude=None):
     with requests.Session() as session:
         print("Querying Index Page: %r" % (url))
         photos, photos_index = get_photos(session, INDEX_URL)
-        print("Got %d indexes" % (len(photos_index)))
+        print("Got %d indexes" % (len(photos)))
 
         # If include parameter is specified, then download only these places
         if include is not None:
