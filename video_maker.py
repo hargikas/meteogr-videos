@@ -27,7 +27,7 @@ def write_video(video, images_folder, images_pattern="*.jpg", fps=30):
 
 def write_all(video_folder, source_folder, video_extension, images_pattern="*.jpg", fps=30):
     """Write a timelapse video for each folder"""
-    for cur in os.listdir(source_folder):
+    for cur in sorted(os.listdir(source_folder)):
         path = os.path.join(source_folder, cur)
         if os.path.isdir(path):
             target_filepath = os.path.join(
