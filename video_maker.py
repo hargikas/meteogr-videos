@@ -21,8 +21,11 @@ def write_video(video, images_folder, images_pattern="*.jpg", fps=30):
         for i, filename in enumerate(filenames):
             printProgressBar(i+1, images_cnt, prefix='Progress:',
                              suffix='Complete', length=50)
-            image = imageio.imread(filename)
-            writer.append_data(image)
+            try:
+                image = imageio.imread(filename)
+                writer.append_data(image)
+            except Exception as exc:
+                print("Warning Exception: %s" % (exc))
 
 
 def write_all(video_folder, source_folder, video_extension, images_pattern="*.jpg", fps=30):
