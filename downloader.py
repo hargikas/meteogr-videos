@@ -16,6 +16,8 @@ from PIL import Image
 import requests
 import fire
 
+from tools import printProgressBar
+
 # The main index page of web-cameras of meteo.gr
 INDEX_URL = 'http://meteo.gr/webcameras.cfm'
 
@@ -47,7 +49,7 @@ class WebCamerasLocations(object):
     def unique_name(self, x):
         if (type(x).__name__ == 'int'):
             if x < len(self.index):
-                return self.index[x]
+                return [self.index[x]]
             return None
         else:
             if x in self.dict:
@@ -56,7 +58,7 @@ class WebCamerasLocations(object):
 
 
     def add_place_name(self, place_name):
-        if self.__str_null_or_empty__(place_name):
+        if not self.__str_null_or_empty__(place_name):
             return
         place_name = place_name.strip()
         unique_name = '{:03d}'.format(len(self.index)) + '.' + place_name
@@ -197,7 +199,7 @@ def sane_arguments(fire_input):
     return result
 
 
-def start(folder, url=INDEX_URL, include=None, exclude=None):
+def start(folder, url=INDEX_URL, include=None, exclude=None, verbose=False):
     """The main process, of quering the index page and create
     a thread for each photo."""
     # Initialize the mimetypes in order not to create more IO in the worker
@@ -213,33 +215,43 @@ def start(folder, url=INDEX_URL, include=None, exclude=None):
         if include is not None:
             tmp = {}
             for item in sane_arguments(include):
-                unique_name = photos.unique_name(item)
-                if unique_name in photos.correlation:
-                    tmp[unique_name] = photos.correlation[unique_name]
+                unique_names = photos.unique_name(item)
+                for unique_name in unique_names:
+                    if unique_name in photos.correlation:
+                        tmp[unique_name] = photos.correlation[unique_name]
             photos.correlation = tmp
 
         # Delete all the files for the excluded files
         if exclude is not None:
             tmp = {}
+            unique_names = set()
             for item in sane_arguments(exclude):
-                unique_name = photos.unique_name(item)
-                for key in photos.correlation:
-                    if key != unique_name:
-                        tmp[key] = photos.correlation[key]
+                unique_names |= set(photos.unique_name(item))
+            for key in photos.correlation:
+                if key not in unique_names:
+                    tmp[key] = photos.correlation[key]
             photos.correlation = tmp
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             threads = {executor.submit(download_latest_photo,
                                        session, folder, i, photos.correlation[i]):
                        i for i in photos.correlation if photos.correlation[i] is not None}
+            cnt = 0
+            total = len(threads)
             for future in concurrent.futures.as_completed(threads):
+                cnt += 1
                 name = threads[future]
                 try:
                     output = future.result()
                 except Exception as exc:
-                    print("%s: EXCEPTION: %s" % (name, exc))
+                    if verbose:
+                        print("%s: EXCEPTION: %s" % (name, exc))
                 else:
-                    print("%s: %s" % (name, output))
+                    if verbose:
+                        print("%s: %s" % (name, output))
+                if not verbose:
+                    printProgressBar(cnt, total, prefix='Progress:',
+                                     suffix='Complete', length=50)
 
 
 def main():
