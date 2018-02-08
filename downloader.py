@@ -23,6 +23,53 @@ INDEX_URL = 'http://meteo.gr/webcameras.cfm'
 # multiple of 3, which is the default TCP packet retransmission window.
 TIMEOUT = 31
 
+class WebCamerasLocations(object):
+    def __init__(self):
+        self.index = []
+        self.dict = {}
+        self.correlation = {}
+
+    def __str_null_or_empty__(self, str_input):
+        if not str_input:
+            return False
+        str_input = str_input.strip()
+        return bool(str_input)
+
+    def __find_first_empty__(self):
+        for i in self.index:
+            if i not in self.correlation:
+                return i
+        return None
+
+    def __len__(self):
+        return len([i for i in self.correlation if self.correlation[i]])
+
+    def unique_name(self, x):
+        if (type(x).__name__ == 'int'):
+            if x < len(self.index):
+                return self.index[x]
+            return None
+        else:
+            if x in self.dict:
+                return self.dict[x]
+            return None
+
+
+    def add_place_name(self, place_name):
+        if self.__str_null_or_empty__(place_name):
+            return
+        place_name = place_name.strip()
+        unique_name = '{:03d}'.format(len(self.index)) + '.' + place_name
+        self.index.append(unique_name)
+        if place_name not in self.dict:
+            self.dict[place_name] = [] 
+        self.dict[place_name].append(unique_name)
+
+    def add_image_src(self, img):
+        unique_name = self.__find_first_empty__()
+        if unique_name:
+            self.correlation[unique_name] = img
+
 def md5(fname):
     """Calculate the md5 sum of a file"""
     hash_md5 = hashlib.md5()
@@ -53,8 +100,8 @@ def verify_photo(fname):
 
 def get_photos(session, url):
     """Query the index page (url) for the meteo images"""
-    photos = {}
-    photos_index = []
+    result = WebCamerasLocations()
+
     req = session.get(url, timeout=TIMEOUT)
     soup = BeautifulSoup(req.text[:], 'html.parser')
     for table in soup.find_all('table'):
@@ -64,33 +111,19 @@ def get_photos(session, url):
                                               'table-bordered']))):
             headers = True
             for row in table.find_all('tr'):
-                if headers:
-                    places = []
-                else:
-                    images = []
                 for col in row.find_all('td'):
                     if headers:
-                        place_name = str(col.string).strip()
-                        if place_name is not None: 
-                            place_name = '{:03d}'.format(
-                                len(photos_index)) + '.' + place_name
-                        places.append(place_name)
-                        photos_index.append(place_name)
+                        result.add_place_name(str(col.string))
                     else:
                         img = col.find('img')
                         if img is not None:
-                            images.append(img.get('src'))
+                            result.add_image_src(img.get('src'))
                         else:
-                            images.append(None)
-                if not headers:
-                    i = 0
-                    for place in places:
-                        if (place is not None) and (images[i] is not None):
-                            photos[place] = images[i]
-                        i = i + 1
-
+                            result.add_image_src(None)
                 headers = not headers
-    return (photos, photos_index)
+
+    return result
+
 
 def download_latest_photo(session, folder, name, url):
     """Downloads the latest photo in the folder"""
@@ -173,38 +206,32 @@ def start(folder, url=INDEX_URL, include=None, exclude=None):
 
     with requests.Session() as session:
         print("Querying Index Page: %r" % (url))
-        photos, photos_index = get_photos(session, INDEX_URL)
+        photos = get_photos(session, INDEX_URL)
         print("Got %d indexes" % (len(photos)))
 
         # If include parameter is specified, then download only these places
         if include is not None:
             tmp = {}
             for item in sane_arguments(include):
-                item_name = item
-                if (type(item).__name__ == 'int'
-                        and item < len(photos_index)):
-                    item_name = photos_index[item]
-                if item_name in photos:
-                    tmp[item_name] = photos[item_name]
-            photos = tmp
+                unique_name = photos.unique_name(item)
+                if unique_name in photos.correlation:
+                    tmp[unique_name] = photos.correlation[unique_name]
+            photos.correlation = tmp
 
         # Delete all the files for the excluded files
         if exclude is not None:
             tmp = {}
             for item in sane_arguments(exclude):
-                item_name = item
-                if (type(item).__name__ == 'int'
-                        and item < len(photos_index)):
-                    item_name = photos_index[item]
-                for key in photos:
-                    if key != item_name:
-                        tmp[key] = photos[key]
-            photos = tmp
+                unique_name = photos.unique_name(item)
+                for key in photos.correlation:
+                    if key != unique_name:
+                        tmp[key] = photos.correlation[key]
+            photos.correlation = tmp
 
         with concurrent.futures.ThreadPoolExecutor() as executor:
             threads = {executor.submit(download_latest_photo,
-                                       session, folder, i, photos[i]):
-                       i for i in photos if photos[i] is not None}
+                                       session, folder, i, photos.correlation[i]):
+                       i for i in photos.correlation if photos.correlation[i] is not None}
             for future in concurrent.futures.as_completed(threads):
                 name = threads[future]
                 try:
