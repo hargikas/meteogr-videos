@@ -13,7 +13,7 @@ fire = "*"
 tendo = "*"
 pillow = "*"
 romanize = "*"
-imageio = "*" {version = "*", platform_machine = "== 'armv7l'"}
+imageio = {version = "*", platform_machine = "== 'armv7l'"}
 
 
 [dev-packages]
