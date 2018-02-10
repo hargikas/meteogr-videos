@@ -4,10 +4,8 @@ import concurrent.futures
 import mimetypes
 import hashlib
 import shutil
-import errno
 import os.path
 import os
-
 
 from bs4 import BeautifulSoup
 from romanize import romanize
@@ -16,13 +14,13 @@ from PIL import Image
 import requests
 import fire
 
-from tools import printProgressBar
+from tools import print_progress, sane_arguments, silentremove
 
 # The main index page of web-cameras of meteo.gr
 INDEX_URL = 'http://meteo.gr/webcameras.cfm'
 
 # It's a good practice to set connect timeouts to slightly larger than a
-# multiple of 3, which is the default TCP packet retransmission window.
+# multiple of 3, which is the default TCP packet retransmission window. 
 TIMEOUT = 31
 
 class WebCamerasLocations(object):
@@ -80,14 +78,6 @@ def md5(fname):
             hash_md5.update(chuck)
         return hash_md5.hexdigest()
 
-def silentremove(fname):
-    """Remove a file and supress any errors if the file doesn't exist"""
-    if fname is not None:
-        try:
-            os.remove(fname)
-        except OSError as exc:
-            if exc.errno != errno.ENOENT:
-                raise
 
 def verify_photo(fname):
     """Guess if the file is a corrupted image or not"""
@@ -180,24 +170,6 @@ def download_latest_photo(session, folder, name, url):
 
     return output
 
-def sane_arguments(fire_input):
-    """Transform the argument into a list of strings or a list of integers"""
-    type_of = type(fire_input).__name__
-    result = []
-
-    # Try to convert possible
-    if ((type_of == 'str') or (type_of == 'int') or (type_of == 'float')):
-        result = [fire_input]
-    elif type_of == 'list':
-        result = fire_input[:]
-    elif type_of == 'tuple':
-        result = list(fire_input)
-    elif type_of == 'dict':
-        result = [key for key in fire_input]
-
-    result = [int(i) if type(i).__name__ == 'float' else i for i in result]
-    return result
-
 
 def start(folder, url=INDEX_URL, include=None, exclude=None, verbose=False):
     """The main process, of quering the index page and create
@@ -208,7 +180,7 @@ def start(folder, url=INDEX_URL, include=None, exclude=None, verbose=False):
 
     with requests.Session() as session:
         print("Querying Index Page: %r" % (url))
-        photos = get_photos(session, INDEX_URL)
+        photos = get_photos(session, url)
         print("Got %d indexes" % (len(photos)))
 
         # If include parameter is specified, then download only these places
@@ -250,8 +222,8 @@ def start(folder, url=INDEX_URL, include=None, exclude=None, verbose=False):
                     if verbose:
                         print("%s: %s" % (name, output))
                 if not verbose:
-                    printProgressBar(cnt, total, prefix='Progress:',
-                                     suffix='Complete', length=50)
+                    print_progress(cnt, total, prefix='Progress:',
+                                   suffix='Complete', length=50)
 
 
 def main():

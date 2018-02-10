@@ -5,7 +5,7 @@ import os
 import imageio
 import fire
 
-from tools import printProgressBar
+from tools import print_progress
 
 
 def write_video(video, images_folder, images_pattern="*.jpg", fps=30):
@@ -19,8 +19,8 @@ def write_video(video, images_folder, images_pattern="*.jpg", fps=30):
     with imageio.get_writer(video, mode='I', fps=fps) as writer:
         print("Writing video: %s" % (os.path.basename(video)))
         for i, filename in enumerate(filenames):
-            printProgressBar(i+1, images_cnt, prefix='Progress:',
-                             suffix='Complete', length=50)
+            print_progress(i+1, images_cnt, prefix='Progress:',
+                           suffix='Complete', length=50)
             try:
                 image = imageio.imread(filename)
                 writer.append_data(image)

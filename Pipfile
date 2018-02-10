@@ -13,6 +13,7 @@ fire = "*"
 tendo = "*"
 pillow = "*"
 romanize = "*"
+astral = "*"
 imageio = {version = "*", platform_machine = "!= 'armv7l'"}
 
 

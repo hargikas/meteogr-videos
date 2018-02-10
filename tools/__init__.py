@@ -1,7 +1,10 @@
 """Various Helper Functions"""
+import errno
+import os
 
-def printProgressBar(iteration, total, prefix='', suffix='', decimals=1,
-                     length=100, fill='█'):
+
+def print_progress(iteration, total, prefix='', suffix='', decimals=1,
+                   length=100, fill='█'):
     """
     Call in a loop to create terminal progress bar
     @params:
@@ -21,3 +24,32 @@ def printProgressBar(iteration, total, prefix='', suffix='', decimals=1,
     # Print New Line on Complete
     if iteration == total:
         print()
+
+
+def sane_arguments(fire_input):
+    """Transform the argument into a list of strings or a list of integers"""
+    type_of = type(fire_input).__name__
+    result = []
+
+    # Try to convert possible
+    if ((type_of == 'str') or (type_of == 'int') or (type_of == 'float')):
+        result = [fire_input]
+    elif type_of == 'list':
+        result = fire_input[:]
+    elif type_of == 'tuple':
+        result = list(fire_input)
+    elif type_of == 'dict':
+        result = [key for key in fire_input]
+
+    result = [int(i) if type(i).__name__ == 'float' else i for i in result]
+    return result
+
+
+def silentremove(fname):
+    """Remove a file and supress any errors if the file doesn't exist"""
+    if fname is not None:
+        try:
+            os.remove(fname)
+        except OSError as exc:
+            if exc.errno != errno.ENOENT:
+                raise
