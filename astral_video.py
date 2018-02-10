@@ -79,7 +79,7 @@ def start(video, place, interval=10, fps=30, force_today=False, url=INDEX_URL):
     sun = city.sun(date=start_day, local=False)
 
     # If we missed the dawn wait for next day
-    if ((not force_today) and (sun['dawn'] < now)):
+    if (((not force_today) and (sun['dawn'] < now)) or (sun['dusk'] < now)):
         start_day = start_day + datetime.timedelta(days=1)
         sun = city.sun(date=start_day, local=False)
 
