@@ -25,21 +25,21 @@ def write_frame(session, writer, url, cur_frame, total_frame):
     """Write a frame using the URL of a webcam"""
     filepath = None
     try:
-        req = session.get(url, stream=True, timeout=TIMEOUT)
-        if req.status_code == 200:
-            req.raw.decode_content = True
-            ext = mimetypes.guess_extension(req.headers.get('content-type'))
-            if ext is not None:
-                if ext in ['.jpe', '.jpeg']:
-                    ext = '.jpg'
+        with session.get(url, stream=True, timeout=TIMEOUT) as req:
+            if req.status_code == 200:
+                req.raw.decode_content = True
+                ext = mimetypes.guess_extension(req.headers.get('content-type'))
+                if ext is not None:
+                    if ext in ['.jpe', '.jpeg']:
+                        ext = '.jpg'
 
-            fp, filepath = tempfile.mkstemp(suffix=ext)
+                fp, filepath = tempfile.mkstemp(suffix=ext)
 
-            with os.fdopen(fp, 'wb') as file:
-                shutil.copyfileobj(req.raw, file)
-        
-            image = imageio.imread(filepath)
-            writer.append_data(image)
+                with os.fdopen(fp, 'wb') as file:
+                    shutil.copyfileobj(req.raw, file)
+            
+                image = imageio.imread(filepath)
+                writer.append_data(image)
     except Exception as exc:
         print("Warning Exception: %s" % (exc))
     silentremove(filepath)

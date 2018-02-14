@@ -94,25 +94,25 @@ def get_photos(session, url):
     """Query the index page (url) for the meteo images"""
     result = WebCamerasLocations()
 
-    req = session.get(url, timeout=TIMEOUT)
-    soup = BeautifulSoup(req.text[:], 'html.parser')
-    for table in soup.find_all('table'):
-        class_attrs = table.get('class')
-        if ((class_attrs is not None)
-                and (set(class_attrs) == set(['table', 'table-striped',
-                                              'table-bordered']))):
-            headers = True
-            for row in table.find_all('tr'):
-                for col in row.find_all('td'):
-                    if headers:
-                        result.add_place_name(str(col.string))
-                    else:
-                        img = col.find('img')
-                        if img is not None:
-                            result.add_image_src(img.get('src'))
+    with session.get(url, timeout=TIMEOUT) as req:
+        soup = BeautifulSoup(req.text[:], 'html.parser')
+        for table in soup.find_all('table'):
+            class_attrs = table.get('class')
+            if ((class_attrs is not None)
+                    and (set(class_attrs) == set(['table', 'table-striped',
+                                                'table-bordered']))):
+                headers = True
+                for row in table.find_all('tr'):
+                    for col in row.find_all('td'):
+                        if headers:
+                            result.add_place_name(str(col.string))
                         else:
-                            result.add_image_src(None)
-                headers = not headers
+                            img = col.find('img')
+                            if img is not None:
+                                result.add_image_src(img.get('src'))
+                            else:
+                                result.add_image_src(None)
+                    headers = not headers
 
     return result
 
@@ -133,22 +133,22 @@ def download_latest_photo(session, folder, name, url):
 
     filename = None
     try:
-        req = session.get(url, stream=True, timeout=TIMEOUT)
-        if req.status_code == 200:
-            ext = mimetypes.guess_extension(req.headers.get('content-type'))
-            filename = os.path.join(place_dir,
-                                    datetime.utcnow()
-                                    .strftime('%Y%m%d%H%M%S'))
-            if ext is not None:
-                if ext in ['.jpe', '.jpeg']:
-                    ext = '.jpg'
-                filename = filename + ext
-            with open(filename, 'wb') as f_p:
-                req.raw.decode_content = True
-                shutil.copyfileobj(req.raw, f_p)
-        else:
-            download_errors = True
-            output = "Error Status Code: %d" % (req.status_code)
+        with session.get(url, stream=True, timeout=TIMEOUT) as req:
+            if req.status_code == 200:
+                ext = mimetypes.guess_extension(req.headers.get('content-type'))
+                filename = os.path.join(place_dir,
+                                        datetime.utcnow()
+                                        .strftime('%Y%m%d%H%M%S'))
+                if ext is not None:
+                    if ext in ['.jpe', '.jpeg']:
+                        ext = '.jpg'
+                    filename = filename + ext
+                with open(filename, 'wb') as f_p:
+                    req.raw.decode_content = True
+                    shutil.copyfileobj(req.raw, f_p)
+            else:
+                download_errors = True
+                output = "Error Status Code: %d" % (req.status_code)
     except requests.exceptions.RequestException as exc:
         download_errors = True
         output = "Error downloading. %s" % (exc)
