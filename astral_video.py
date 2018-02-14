@@ -93,7 +93,7 @@ def start(video, place, interval=10, fps=30, force_today=False, url=INDEX_URL):
     end_secs = max(int((sun['dusk'] - now).total_seconds()), 0)
 
     with requests.Session() as session:
-        session.headers.update({'Cache-Control': 'no-cache, no-store, no-transform'})
+        session.headers.update({'cache-control': 'no-cache, no-store, must-revalidate'})
         s = sched.scheduler()
         with imageio.get_writer(video, mode='I', fps=fps) as writer:
             for i in range(start_secs,end_secs,interval):
