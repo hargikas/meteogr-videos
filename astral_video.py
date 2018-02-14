@@ -18,8 +18,9 @@ import downloader
 INDEX_URL = 'http://meteo.gr/webcameras.cfm'
 
 # It's a good practice to set connect timeouts to slightly larger than a
-# multiple of 3, which is the default TCP packet retransmission window. 
+# multiple of 3, which is the default TCP packet retransmission window.
 TIMEOUT = 31
+
 
 def write_frame(session, writer, url, cur_frame, total_frame):
     """Write a frame using the URL of a webcam"""
@@ -28,7 +29,8 @@ def write_frame(session, writer, url, cur_frame, total_frame):
         with session.get(url, stream=True, timeout=TIMEOUT) as req:
             if req.status_code == 200:
                 req.raw.decode_content = True
-                ext = mimetypes.guess_extension(req.headers.get('content-type'))
+                ext = mimetypes.guess_extension(
+                    req.headers.get('content-type'))
                 if ext is not None:
                     if ext in ['.jpe', '.jpeg']:
                         ext = '.jpg'
@@ -37,13 +39,14 @@ def write_frame(session, writer, url, cur_frame, total_frame):
 
                 with os.fdopen(fp, 'wb') as file:
                     shutil.copyfileobj(req.raw, file)
-            
+
                 image = imageio.imread(filepath)
                 writer.append_data(image)
     except Exception as exc:
         print("Warning Exception: %s" % (exc))
     silentremove(filepath)
-    print_progress(cur_frame+1, total_frame, prefix='Progress:', suffix='Complete', length=50)
+    print_progress(cur_frame+1, total_frame, prefix='Progress:',
+                   suffix='Complete', length=50)
 
 
 def start(video, place, interval=10, fps=30, force_today=False, url=INDEX_URL):
@@ -70,8 +73,8 @@ def start(video, place, interval=10, fps=30, force_today=False, url=INDEX_URL):
 
     print('Information for %s/%s\n' % (city_name, city.region))
     print('Timezone: %s' % city.timezone)
-    print('Latitude: %.02f; Longitude: %.02f\n' % \
-           (city.latitude, city.longitude))
+    print('Latitude: %.02f; Longitude: %.02f\n' %
+          (city.latitude, city.longitude))
 
     now = datetime.datetime.utcnow()
     now = now.replace(tzinfo=pytz.utc)
@@ -93,17 +96,20 @@ def start(video, place, interval=10, fps=30, force_today=False, url=INDEX_URL):
     end_secs = max(int((sun['dusk'] - now).total_seconds()), 0)
 
     with requests.Session() as session:
-        session.headers.update({'cache-control': 'no-cache, no-store, must-revalidate'})
+        session.headers.update(
+            {'cache-control': 'no-cache, no-store, must-revalidate'})
         s = sched.scheduler()
         with imageio.get_writer(video, mode='I', fps=fps) as writer:
-            for i in range(start_secs,end_secs,interval):
-                s.enter(i, 1, write_frame, argument=(session, writer, photo_url, i, end_secs - start_secs))
+            for i in range(start_secs, end_secs, interval):
+                s.enter(i, 1, write_frame, argument=(
+                    session, writer, photo_url, i, end_secs - start_secs))
             print("Capturing %d frames" % (len(s.queue)))
             s.run()
-        
+
 
 def main():
     fire.Fire(start)
+
 
 if __name__ == '__main__':
     main()

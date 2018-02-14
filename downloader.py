@@ -20,8 +20,9 @@ from tools import print_progress, sane_arguments, silentremove
 INDEX_URL = 'http://meteo.gr/webcameras.cfm'
 
 # It's a good practice to set connect timeouts to slightly larger than a
-# multiple of 3, which is the default TCP packet retransmission window. 
+# multiple of 3, which is the default TCP packet retransmission window.
 TIMEOUT = 31
+
 
 class WebCamerasLocations(object):
     def __init__(self):
@@ -54,7 +55,6 @@ class WebCamerasLocations(object):
                 return self.dict[x]
             return None
 
-
     def add_place_name(self, place_name):
         if not self.__str_null_or_empty__(place_name):
             return
@@ -62,13 +62,14 @@ class WebCamerasLocations(object):
         unique_name = '{:03d}'.format(len(self.index)) + '.' + place_name
         self.index.append(unique_name)
         if place_name not in self.dict:
-            self.dict[place_name] = [] 
+            self.dict[place_name] = []
         self.dict[place_name].append(unique_name)
 
     def add_image_src(self, img):
         unique_name = self.__find_first_empty__()
         if unique_name:
             self.correlation[unique_name] = img
+
 
 def md5(fname):
     """Calculate the md5 sum of a file"""
@@ -90,6 +91,7 @@ def verify_photo(fname):
         return False
     return True
 
+
 def get_photos(session, url):
     """Query the index page (url) for the meteo images"""
     result = WebCamerasLocations()
@@ -100,7 +102,7 @@ def get_photos(session, url):
             class_attrs = table.get('class')
             if ((class_attrs is not None)
                     and (set(class_attrs) == set(['table', 'table-striped',
-                                                'table-bordered']))):
+                                                  'table-bordered']))):
                 headers = True
                 for row in table.find_all('tr'):
                     for col in row.find_all('td'):
@@ -135,7 +137,8 @@ def download_latest_photo(session, folder, name, url):
     try:
         with session.get(url, stream=True, timeout=TIMEOUT) as req:
             if req.status_code == 200:
-                ext = mimetypes.guess_extension(req.headers.get('content-type'))
+                ext = mimetypes.guess_extension(
+                    req.headers.get('content-type'))
                 filename = os.path.join(place_dir,
                                         datetime.utcnow()
                                         .strftime('%Y%m%d%H%M%S'))
