@@ -97,7 +97,8 @@ def start(video, place, interval=10, fps=30, force_today=False, url=INDEX_URL):
 
     with requests.Session() as session:
         session.headers.update(
-            {'cache-control': 'no-cache, no-store, must-revalidate'})
+            {'Cache-Control': 'no-cache, no-store, no-transform, max-age=0',
+             'Pragma': 'no-cache'})
         s = sched.scheduler()
         with imageio.get_writer(video, mode='I', fps=fps) as writer:
             for i in range(start_secs, end_secs, interval):
